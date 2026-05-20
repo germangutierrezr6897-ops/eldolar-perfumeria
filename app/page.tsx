@@ -3,89 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-const PRODUCTOS = [
-  {
-    id: 1,
-    nombre: "Chanel N°5",
-    marca: "Chanel",
-    categoria: "Perfumes y Fragancias",
-    precio: 45990,
-    ml: 100,
-    emoji: "🌸",
-    badge: "NUEVO",
-  },
-  {
-    id: 2,
-    nombre: "Dior Sauvage",
-    marca: "Dior",
-    categoria: "Perfumes y Fragancias",
-    precio: 67990,
-    ml: 100,
-    emoji: "🌸",
-    badge: "OFERTA",
-  },
-  {
-    id: 3,
-    nombre: "Base L'Oréal",
-    marca: "L'Oréal",
-    categoria: "Maquillaje",
-    precio: 18990,
-    ml: null,
-    emoji: "💄",
-    badge: "NUEVO",
-  },
-  {
-    id: 4,
-    nombre: "Labial MAC",
-    marca: "MAC",
-    categoria: "Maquillaje",
-    precio: 22990,
-    ml: null,
-    emoji: "💄",
-    badge: "OFERTA",
-  },
-  {
-    id: 5,
-    nombre: "Crema Facial Nivea",
-    marca: "Nivea",
-    categoria: "Cuidado del Rostro",
-    precio: 12990,
-    ml: null,
-    emoji: "✨",
-    badge: "NUEVO",
-  },
-  {
-    id: 6,
-    nombre: "Sérum Neutrogena",
-    marca: "Neutrogena",
-    categoria: "Cuidado del Rostro",
-    precio: 24990,
-    ml: null,
-    emoji: "✨",
-    badge: "OFERTA",
-  },
-];
-
-const MAS_VENDIDOS = [
-  { id: 1, nombre: "Chanel N°5",          marca: "Chanel",            precio: 45990, ml: 100, emoji: "🌸" },
-  { id: 2, nombre: "Dior Sauvage",         marca: "Dior",              precio: 67990, ml: 100, emoji: "🌸" },
-  { id: 3, nombre: "Good Girl",            marca: "Carolina Herrera",  precio: 48990, ml: 80,  emoji: "💄" },
-  { id: 4, nombre: "Black Orchid",         marca: "Tom Ford",          precio: 89990, ml: 50,  emoji: "✨" },
-  { id: 5, nombre: "Coco Mademoiselle",    marca: "Chanel",            precio: 58990, ml: 100, emoji: "🌸" },
-  { id: 6, nombre: "Miss Dior",            marca: "Dior",              precio: 43990, ml: 50,  emoji: "🌸" },
-];
-
-const CATEGORIAS = [
-  "Todas",
-  "Maquillaje",
-  "Cuidado del Rostro",
-  "Cuidado Corporal",
-  "Capilar",
-  "Perfumes y Fragancias",
-  "Mi Bebé",
-  "Cuidado Personal",
-];
+import { supabase } from "@/lib/supabase";
+import type { Producto, Categoria } from "@/lib/supabase";
 
 function formatPrecio(precio: number) {
   return `$${precio.toLocaleString("es-CL")}`;
@@ -98,18 +17,40 @@ const BADGE_BG: Record<string, string> = {
 };
 
 export default function Home() {
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [loading, setLoading] = useState(true);
   const [categoriaActiva, setCategoriaActiva] = useState("Todas");
   const [busqueda, setBusqueda] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  const filtrados = PRODUCTOS.filter((p) => {
-    const matchCategoria =
-      categoriaActiva === "Todas" || p.categoria === categoriaActiva;
+  useEffect(() => {
+    async function cargarDatos() {
+      const [{ data: prods }, { data: cats }] = await Promise.all([
+        supabase
+          .from("productos")
+          .select("*, marcas(nombre), categorias(nombre)")
+          .eq("activo", true)
+          .order("created_at", { ascending: false }),
+        supabase.from("categorias").select("*").order("nombre"),
+      ]);
+      setProductos(prods || []);
+      setCategorias(cats || []);
+      setLoading(false);
+    }
+    cargarDatos();
+  }, []);
+
+  const masVendidos = productos.filter((p) => p.mas_vendido);
+
+  const filtrados = productos.filter((p) => {
+    const nombreCat = p.categorias?.nombre ?? "";
+    const matchCategoria = categoriaActiva === "Todas" || nombreCat === categoriaActiva;
     const matchBusqueda =
       busqueda === "" ||
       p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.marca.toLowerCase().includes(busqueda.toLowerCase());
+      (p.marcas?.nombre ?? "").toLowerCase().includes(busqueda.toLowerCase());
     return matchCategoria && matchBusqueda;
   });
 
@@ -121,22 +62,20 @@ export default function Home() {
 
     const autoScroll = setInterval(() => {
       if (isPaused) return;
-
       const cardWidth = 276;
       const maxScroll = carousel.scrollWidth - carousel.clientWidth;
-
       if (carousel.scrollLeft >= maxScroll - 10) {
-        carousel.scrollTo({ left: 0, behavior: 'smooth' });
+        carousel.scrollTo({ left: 0, behavior: "smooth" });
       } else {
-        carousel.scrollTo({ left: carousel.scrollLeft + cardWidth, behavior: 'smooth' });
+        carousel.scrollTo({ left: carousel.scrollLeft + cardWidth, behavior: "smooth" });
       }
     }, 2500);
 
-    carousel.addEventListener('mouseenter', () => { isPaused = true; });
-    carousel.addEventListener('mouseleave', () => { isPaused = false; });
+    carousel.addEventListener("mouseenter", () => { isPaused = true; });
+    carousel.addEventListener("mouseleave", () => { isPaused = false; });
 
     return () => clearInterval(autoScroll);
-  }, []);
+  }, [masVendidos.length]);
 
   function scrollCarousel(direction: "left" | "right") {
     if (!carouselRef.current) return;
@@ -171,9 +110,7 @@ export default function Home() {
           0%, 100% { transform: translateY(0); }
           50%      { transform: translateY(8px); }
         }
-        .product-card {
-          transition: box-shadow 0.3s ease, transform 0.3s ease;
-        }
+        .product-card { transition: box-shadow 0.3s ease, transform 0.3s ease; }
         .product-card:hover {
           box-shadow: 0 8px 24px rgba(107,45,139,0.2);
           transform: translateY(-4px);
@@ -199,7 +136,7 @@ export default function Home() {
         >
           <Link href="/" className="shrink-0" style={{ paddingTop: 8, paddingBottom: 8, overflow: "visible" }}>
             <div style={{ position: "relative", overflow: "hidden", animation: "shimmer 3s ease-in-out infinite", cursor: "pointer" }}>
-              <Image src="/logo-final.png" alt="El Dólar Beauty Store" width={260} height={77} priority />
+              <Image src="/logo-final.png" alt="El Dólar Perfumería" width={260} height={77} priority />
               <span style={{
                 position: "absolute", top: 0, left: 0, width: "40%", height: "100%",
                 background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
@@ -210,9 +147,9 @@ export default function Home() {
 
           <div className="hidden md:flex items-center" style={{ gap: "32px" }}>
             {[
-              { href: "/",          label: "Inicio"   },
-              { href: "/catalog",   label: "Catálogo" },
-              { href: "#nosotros",  label: "Nosotros" },
+              { href: "/",         label: "Inicio"   },
+              { href: "/catalog",  label: "Catálogo" },
+              { href: "#nosotros", label: "Nosotros" },
             ].reduce<React.ReactNode[]>((acc, link, i) => [
               ...acc,
               ...(i > 0 ? [<span key={`sep-${i}`} className="select-none pointer-events-none" style={{ color: "#6B2D8B" }}>|</span>] : []),
@@ -282,79 +219,91 @@ export default function Home() {
       </section>
 
       {/* ── Carrusel Más Vendidos ── */}
-      <section style={{ background: "#FFFFFF", padding: "48px 0" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <p style={{ color: "#1A1A1A", fontSize: "24px", fontWeight: 600, marginBottom: "4px" }}>
-            🔥 Más Vendidos
-          </p>
-          <p style={{ color: "rgba(26,26,26,0.5)", fontSize: "14px", marginBottom: "24px" }}>
-            Los favoritos de nuestros clientes
-          </p>
+      {(loading || masVendidos.length > 0) && (
+        <section style={{ background: "#FFFFFF", padding: "48px 0" }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <p style={{ color: "#1A1A1A", fontSize: "24px", fontWeight: 600, marginBottom: "4px" }}>
+              🔥 Más Vendidos
+            </p>
+            <p style={{ color: "rgba(26,26,26,0.5)", fontSize: "14px", marginBottom: "24px" }}>
+              Los favoritos de nuestros clientes
+            </p>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {/* Flecha izquierda */}
-            <button onClick={() => scrollCarousel("left")} className="carousel-arrow"
-              style={{ background: "rgba(107,45,139,0.15)", color: "#6B2D8B", border: "none",
-                borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
-                fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0, transition: "background 0.2s" }}>
-              ←
-            </button>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "48px", color: "#6B2D8B" }}>Cargando productos...</div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button onClick={() => scrollCarousel("left")} className="carousel-arrow"
+                  style={{ background: "rgba(107,45,139,0.15)", color: "#6B2D8B", border: "none",
+                    borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
+                    fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, transition: "background 0.2s" }}>
+                  ←
+                </button>
 
-            {/* Track */}
-            <div ref={carouselRef} className="carousel-container"
-              style={{ display: "flex", gap: "16px", overflowX: "scroll", scrollBehavior: "smooth", flex: 1 }}>
-              {MAS_VENDIDOS.map((producto) => (
-                <div key={producto.id} className="carousel-card product-card flex-shrink-0 overflow-hidden flex flex-col"
-                  style={{ width: "260px", background: "white",
-                    border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
-                  {/* Imagen placeholder */}
-                  <div style={{ position: "relative", height: "180px", background: "linear-gradient(135deg, #1a0a2e, #6B2D8B)",
-                    display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: "56px", opacity: 0.25, userSelect: "none" }}>{producto.emoji}</span>
-                    <span style={{ position: "absolute", top: "10px", left: "10px", background: "#C2185B",
-                      color: "white", fontSize: "11px", padding: "4px 10px", borderRadius: "4px", fontWeight: 600 }}>
-                      TOP
-                    </span>
-                  </div>
-                  {/* Info */}
-                  <div style={{ padding: "14px 14px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
-                    <span style={{ color: "#A855C9", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
-                      {producto.marca}
-                    </span>
-                    <h3 style={{ fontFamily: "var(--font-cormorant)", color: "#1A1A1A", fontSize: "18px", lineHeight: 1.3, marginBottom: "4px" }}>
-                      {producto.nombre}
-                    </h3>
-                    <p style={{ color: "rgba(26,26,26,0.5)", fontSize: "12px", marginBottom: "12px" }}>
-                      {producto.ml} ml
-                    </p>
-                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                      <span style={{ fontFamily: "var(--font-cormorant)", color: "#6B2D8B", fontSize: "20px", fontWeight: 300 }}>
-                        {formatPrecio(producto.precio)}
-                      </span>
-                      <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}%20(${producto.ml}ml).%20%C2%BFEst%C3%A1%20disponible%3F`}
-                        target="_blank" rel="noopener noreferrer"
-                        style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 500,
-                          padding: "6px 10px", borderRadius: "9999px", textDecoration: "none", whiteSpace: "nowrap" }}>
-                        💬 Consultar
-                      </a>
+                <div ref={carouselRef} className="carousel-container"
+                  style={{ display: "flex", gap: "16px", overflowX: "scroll", scrollBehavior: "smooth", flex: 1 }}>
+                  {masVendidos.map((producto) => (
+                    <div key={producto.id} className="carousel-card product-card flex-shrink-0 overflow-hidden flex flex-col"
+                      style={{ width: "260px", background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
+                      <div style={{ position: "relative", height: "180px", borderRadius: "16px 16px 0 0", overflow: "hidden",
+                        background: "linear-gradient(135deg, #1a0a2e, #6B2D8B)",
+                        display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {producto.imagen_url ? (
+                          <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: "56px", opacity: 0.25, userSelect: "none" }}>🌸</span>
+                        )}
+                        <span style={{ position: "absolute", top: "10px", left: "10px", background: "#C2185B",
+                          color: "white", fontSize: "11px", padding: "4px 10px", borderRadius: "4px", fontWeight: 600, zIndex: 1 }}>
+                          TOP
+                        </span>
+                      </div>
+                      <div style={{ padding: "14px 14px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
+                        <span style={{ color: "#A855C9", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
+                          {producto.marcas?.nombre}
+                        </span>
+                        <h3 style={{ fontFamily: "var(--font-cormorant)", color: "#1A1A1A", fontSize: "18px", lineHeight: 1.3, marginBottom: "4px" }}>
+                          {producto.nombre}
+                        </h3>
+                        <p style={{ color: "rgba(26,26,26,0.5)", fontSize: "12px", marginBottom: "12px" }}>
+                          {producto.tamano ? `${producto.tamano} · ` : ""}{producto.categorias?.nombre}
+                        </p>
+                        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontFamily: "var(--font-cormorant)", color: "#6B2D8B", fontSize: "20px", fontWeight: 300 }}>
+                              {formatPrecio(producto.precio)}
+                            </span>
+                            {producto.precio_oferta && (
+                              <span style={{ color: "rgba(26,26,26,0.4)", fontSize: "12px", textDecoration: "line-through" }}>
+                                {formatPrecio(producto.precio_oferta)}
+                              </span>
+                            )}
+                          </div>
+                          <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 500,
+                              padding: "6px 10px", borderRadius: "9999px", textDecoration: "none", whiteSpace: "nowrap" }}>
+                            💬 Consultar
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Flecha derecha */}
-            <button onClick={() => scrollCarousel("right")} className="carousel-arrow"
-              style={{ background: "rgba(107,45,139,0.15)", color: "#6B2D8B", border: "none",
-                borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
-                fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0, transition: "background 0.2s" }}>
-              →
-            </button>
+                <button onClick={() => scrollCarousel("right")} className="carousel-arrow"
+                  style={{ background: "rgba(107,45,139,0.15)", color: "#6B2D8B", border: "none",
+                    borderRadius: "50%", width: "44px", height: "44px", cursor: "pointer",
+                    fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, transition: "background 0.2s" }}>
+                  →
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Grid de Productos ── */}
       <section id="productos" style={{ background: "#FFFFFF" }}>
@@ -374,16 +323,16 @@ export default function Home() {
               color: "#1A1A1A", borderRadius: "8px", padding: "8px 14px", fontSize: "14px",
               marginBottom: "20px", width: "100%", maxWidth: "320px", display: "block" }} />
 
-          {/* Filtros */}
+          {/* Filtros dinámicos */}
           <div className="flex flex-wrap items-center gap-2 mb-10">
-            {CATEGORIAS.map((cat) => (
-              <button key={cat} onClick={() => setCategoriaActiva(cat)}
-                style={categoriaActiva === cat
+            {[{ id: 0, nombre: "Todas" }, ...categorias].map((cat) => (
+              <button key={cat.id} onClick={() => setCategoriaActiva(cat.nombre)}
+                style={categoriaActiva === cat.nombre
                   ? { background: "#6B2D8B", color: "white", border: "1px solid #6B2D8B",
                       borderRadius: "9999px", padding: "6px 16px", fontSize: "14px", cursor: "pointer" }
                   : { background: "white", color: "#6B2D8B", border: "1px solid #6B2D8B",
                       borderRadius: "9999px", padding: "6px 16px", fontSize: "14px", cursor: "pointer" }}>
-                {cat}
+                {cat.nombre}
               </button>
             ))}
           </div>
@@ -391,8 +340,12 @@ export default function Home() {
 
         {/* Grid 4 columnas */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-          {filtrados.length === 0 ? (
-            <div className="text-center py-24" style={{ color: "#C084FC" }}>
+          {loading ? (
+            <div className="text-center py-24" style={{ color: "#6B2D8B" }}>
+              <p className="text-lg">Cargando productos...</p>
+            </div>
+          ) : filtrados.length === 0 ? (
+            <div className="text-center py-24" style={{ color: "#6B2D8B" }}>
               <p className="text-5xl mb-4">✨</p>
               <p className="text-lg">No hay productos en esta categoría aún.</p>
             </div>
@@ -400,37 +353,49 @@ export default function Home() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px" }}>
               {filtrados.map((producto) => (
                 <div key={producto.id} className="product-card overflow-hidden flex flex-col"
-                  style={{ background: "white",
-                    border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
+                  style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
                   {/* Imagen con badge */}
-                  <div style={{ position: "relative", height: "200px",
+                  <div style={{ position: "relative", height: "200px", borderRadius: "16px 16px 0 0", overflow: "hidden",
                     background: "linear-gradient(135deg, #1a0a2e, #6B2D8B)",
                     display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: "64px", opacity: 0.25, userSelect: "none" }}>{producto.emoji}</span>
-                    <span style={{ position: "absolute", top: "10px", left: "10px",
-                      background: BADGE_BG[producto.badge], color: "white",
-                      fontSize: "11px", padding: "4px 10px", borderRadius: "4px", fontWeight: 600 }}>
-                      {producto.badge}
-                    </span>
+                    {producto.imagen_url ? (
+                      <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontSize: "64px", opacity: 0.25, userSelect: "none" }}>🌸</span>
+                    )}
+                    {producto.badge && (
+                      <span style={{ position: "absolute", top: "10px", left: "10px",
+                        background: BADGE_BG[producto.badge] ?? "#6B2D8B", color: "white",
+                        fontSize: "11px", padding: "4px 10px", borderRadius: "4px", fontWeight: 600, zIndex: 1 }}>
+                        {producto.badge}
+                      </span>
+                    )}
                   </div>
                   {/* Info */}
                   <div className="p-5 flex flex-col flex-1">
                     <span className="text-xs tracking-widest uppercase mb-1" style={{ color: "#A855C9" }}>
-                      {producto.marca}
+                      {producto.marcas?.nombre}
                     </span>
                     <h3 className="text-xl mb-1 leading-tight"
                       style={{ fontFamily: "var(--font-cormorant)", color: "#1A1A1A" }}>
                       {producto.nombre}
                     </h3>
                     <p className="text-sm mb-4" style={{ color: "rgba(26,26,26,0.5)" }}>
-                      {producto.ml ? `${producto.ml} ml · ` : ""}{producto.categoria}
+                      {producto.tamano ? `${producto.tamano} · ` : ""}{producto.categorias?.nombre}
                     </p>
                     <div className="mt-auto flex items-center justify-between gap-3">
-                      <span className="text-2xl font-light"
-                        style={{ fontFamily: "var(--font-cormorant)", color: "#6B2D8B" }}>
-                        {formatPrecio(producto.precio)}
-                      </span>
-                      <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.ml ? `%20(${producto.ml}ml)` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span className="text-2xl font-light"
+                          style={{ fontFamily: "var(--font-cormorant)", color: "#6B2D8B" }}>
+                          {formatPrecio(producto.precio)}
+                        </span>
+                        {producto.precio_oferta && (
+                          <span style={{ color: "rgba(26,26,26,0.4)", fontSize: "12px", textDecoration: "line-through" }}>
+                            {formatPrecio(producto.precio_oferta)}
+                          </span>
+                        )}
+                      </div>
+                      <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
                         style={{ background: "#6B2D8B", color: "white", padding: "8px 12px",
