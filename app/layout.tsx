@@ -37,6 +37,7 @@ export const metadata: Metadata = {
     locale: "es_CL",
     type: "website",
   },
+  themeColor: "#6B2D8B",
 };
 
 export default function RootLayout({
@@ -44,6 +45,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${cormorant.variable} ${dmSans.variable}`}>
+      <head>
+        <meta name="theme-color" content="#6B2D8B" />
+        <meta name="msapplication-navbutton-color" content="#6B2D8B" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="#6B2D8B" />
+      </head>
       <body className="min-h-screen flex flex-col antialiased">{children}</body>
     </html>
   );

@@ -1,47 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-const PRODUCTOS = [
-  // Perfumes y Fragancias
-  { id: 1,  nombre: "Chanel N°5",              marca: "Chanel",          categoria: "Perfumes y Fragancias", precio: 45990, ml: 100, emoji: "🌸", badge: "NUEVO"  },
-  { id: 2,  nombre: "Dior Sauvage EDT",         marca: "Dior",            categoria: "Perfumes y Fragancias", precio: 67990, ml: 100, emoji: "🌸", badge: "OFERTA" },
-  // Maquillaje
-  { id: 3,  nombre: "Base Infallible",          marca: "L'Oréal",         categoria: "Maquillaje",            precio: 18990, ml: null, emoji: "💄", badge: "NUEVO"  },
-  { id: 4,  nombre: "Labial Ruby Woo",          marca: "MAC",             categoria: "Maquillaje",            precio: 22990, ml: null, emoji: "💄", badge: "OFERTA" },
-  // Cuidado del Rostro
-  { id: 5,  nombre: "Crema Hidratante",         marca: "Nivea",           categoria: "Cuidado del Rostro",    precio: 12990, ml: null, emoji: "✨", badge: "NUEVO"  },
-  { id: 6,  nombre: "Sérum Vitamina C",         marca: "Neutrogena",      categoria: "Cuidado del Rostro",    precio: 24990, ml: null, emoji: "✨", badge: "OFERTA" },
-  // Cuidado Corporal
-  { id: 7,  nombre: "Crema Corporal Nutritiva", marca: "Dove",            categoria: "Cuidado Corporal",      precio: 9990,  ml: null, emoji: "🧴", badge: "NUEVO"  },
-  { id: 8,  nombre: "Exfoliante Avena",         marca: "St. Ives",        categoria: "Cuidado Corporal",      precio: 14990, ml: null, emoji: "🧴", badge: "OFERTA" },
-  // Capilar
-  { id: 9,  nombre: "Shampoo Anti-caspa",       marca: "Head & Shoulders",categoria: "Capilar",               precio: 8990,  ml: 400,  emoji: "💇", badge: "NUEVO"  },
-  { id: 10, nombre: "Acondicionador Liso",      marca: "Pantene",         categoria: "Capilar",               precio: 10990, ml: 400,  emoji: "💇", badge: "OFERTA" },
-  // Mi Bebé
-  { id: 11, nombre: "Loción Bebé Suave",        marca: "Johnson's",       categoria: "Mi Bebé",               precio: 7990,  ml: 300,  emoji: "🍼", badge: "NUEVO"  },
-  { id: 12, nombre: "Shampoo Bebé Sin Lágrimas", marca: "Johnson's",      categoria: "Mi Bebé",               precio: 6990,  ml: 300,  emoji: "🍼", badge: "OFERTA" },
-  // Cuidado Personal
-  { id: 13, nombre: "Desodorante 48h",          marca: "Rexona",          categoria: "Cuidado Personal",      precio: 5990,  ml: null, emoji: "🧼", badge: "NUEVO"  },
-  { id: 14, nombre: "Jabón Humectante",         marca: "Dove",            categoria: "Cuidado Personal",      precio: 3990,  ml: null, emoji: "🧼", badge: "OFERTA" },
-];
-
-const CATEGORIAS = [
-  "Todas",
-  "Maquillaje",
-  "Cuidado del Rostro",
-  "Cuidado Corporal",
-  "Capilar",
-  "Perfumes y Fragancias",
-  "Mi Bebé",
-  "Cuidado Personal",
-];
+import { supabase } from "@/lib/supabase";
+import type { Producto, Categoria } from "@/lib/supabase";
 
 const BADGE_BG: Record<string, string> = {
   NUEVO:  "#6B2D8B",
   OFERTA: "#C2185B",
+  TOP:    "#C2185B",
 };
 
 function formatPrecio(precio: number) {
@@ -49,16 +17,37 @@ function formatPrecio(precio: number) {
 }
 
 export default function CatalogPage() {
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [loading, setLoading] = useState(true);
   const [categoriaActiva, setCategoriaActiva] = useState("Todas");
   const [busqueda, setBusqueda] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const filtrados = PRODUCTOS.filter((p) => {
-    const matchCategoria = categoriaActiva === "Todas" || p.categoria === categoriaActiva;
+  useEffect(() => {
+    async function cargarDatos() {
+      const [{ data: prods }, { data: cats }] = await Promise.all([
+        supabase
+          .from("productos")
+          .select("*, marcas(nombre), categorias(nombre)")
+          .eq("activo", true)
+          .order("created_at", { ascending: false }),
+        supabase.from("categorias").select("*").order("nombre"),
+      ]);
+      setProductos(prods || []);
+      setCategorias(cats || []);
+      setLoading(false);
+    }
+    cargarDatos();
+  }, []);
+
+  const filtrados = productos.filter((p) => {
+    const nombreCat = p.categorias?.nombre ?? "";
+    const matchCategoria = categoriaActiva === "Todas" || nombreCat === categoriaActiva;
     const matchBusqueda =
       busqueda === "" ||
       p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.marca.toLowerCase().includes(busqueda.toLowerCase());
+      (p.marcas?.nombre ?? "").toLowerCase().includes(busqueda.toLowerCase());
     return matchCategoria && matchBusqueda;
   });
 
@@ -86,7 +75,6 @@ export default function CatalogPage() {
         }
         .search-input::placeholder { color: rgba(26,26,26,0.4); }
         .search-input:focus { outline: none; border-color: #6B2D8B; }
-        .carousel-arrow:hover { background: #6B2D8B !important; }
       `}</style>
 
       {/* Navbar */}
@@ -100,7 +88,7 @@ export default function CatalogPage() {
         >
           <Link href="/" className="shrink-0" style={{ paddingTop: 8, paddingBottom: 8, overflow: "visible" }}>
             <div style={{ position: "relative", overflow: "hidden", animation: "shimmer 3s ease-in-out infinite", cursor: "pointer" }}>
-              <Image src="/logo-final.png" alt="El Dólar Beauty Store" width={260} height={77} priority />
+              <Image src="/logo-final.png" alt="El Dólar Perfumería" width={260} height={77} priority />
               <span style={{
                 position: "absolute", top: 0, left: 0, width: "40%", height: "100%",
                 background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
@@ -111,9 +99,9 @@ export default function CatalogPage() {
 
           <div className="hidden md:flex items-center" style={{ gap: "32px" }}>
             {[
-              { href: "/",         label: "Inicio"   },
-              { href: "/catalog",  label: "Catálogo" },
-              { href: "/#nosotros",label: "Nosotros" },
+              { href: "/",          label: "Inicio"   },
+              { href: "/catalog",   label: "Catálogo" },
+              { href: "/#nosotros", label: "Nosotros" },
             ].reduce<React.ReactNode[]>((acc, link, i) => [
               ...acc,
               ...(i > 0 ? [<span key={`sep-${i}`} className="select-none pointer-events-none" style={{ color: "#6B2D8B" }}>|</span>] : []),
@@ -170,7 +158,9 @@ export default function CatalogPage() {
             Catálogo completo
           </h1>
           <p style={{ color: "rgba(26,26,26,0.5)", fontSize: "15px" }}>
-            {filtrados.length} producto{filtrados.length !== 1 ? "s" : ""} disponible{filtrados.length !== 1 ? "s" : ""} · Perfumes, maquillaje, cuidado personal y más
+            {loading
+              ? "Cargando productos..."
+              : `${filtrados.length} producto${filtrados.length !== 1 ? "s" : ""} disponible${filtrados.length !== 1 ? "s" : ""} · Perfumes, maquillaje, cuidado personal y más`}
           </p>
         </div>
       </section>
@@ -186,22 +176,26 @@ export default function CatalogPage() {
               borderRadius: "8px", padding: "8px 14px", fontSize: "14px",
               marginBottom: "20px", width: "100%", maxWidth: "320px", display: "block" }} />
 
-          {/* Chips de categoría */}
+          {/* Chips de categoría dinámicos */}
           <div className="flex flex-wrap items-center gap-2 mb-10">
-            {CATEGORIAS.map((cat) => (
-              <button key={cat} onClick={() => setCategoriaActiva(cat)}
-                style={categoriaActiva === cat
+            {[{ id: 0, nombre: "Todas" }, ...categorias].map((cat) => (
+              <button key={cat.id} onClick={() => setCategoriaActiva(cat.nombre)}
+                style={categoriaActiva === cat.nombre
                   ? { background: "#6B2D8B", color: "white", border: "1px solid #6B2D8B",
                       borderRadius: "9999px", padding: "6px 16px", fontSize: "14px", cursor: "pointer" }
                   : { background: "white", color: "#6B2D8B", border: "1px solid #6B2D8B",
                       borderRadius: "9999px", padding: "6px 16px", fontSize: "14px", cursor: "pointer" }}>
-                {cat}
+                {cat.nombre}
               </button>
             ))}
           </div>
 
-          {/* Grid 4 columnas */}
-          {filtrados.length === 0 ? (
+          {/* Grid */}
+          {loading ? (
+            <div className="text-center py-24" style={{ color: "#6B2D8B" }}>
+              <p className="text-lg">Cargando productos...</p>
+            </div>
+          ) : filtrados.length === 0 ? (
             <div className="text-center py-24" style={{ color: "#6B2D8B" }}>
               <p className="text-5xl mb-4">✨</p>
               <p className="text-lg">No hay productos en esta categoría aún.</p>
@@ -212,34 +206,47 @@ export default function CatalogPage() {
                 <div key={producto.id} className="product-card overflow-hidden flex flex-col"
                   style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
                   {/* Imagen con badge */}
-                  <div style={{ position: "relative", height: "200px",
+                  <div style={{ position: "relative", height: "200px", borderRadius: "16px 16px 0 0", overflow: "hidden",
                     background: "linear-gradient(135deg, #1a0a2e, #6B2D8B)",
                     display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: "64px", opacity: 0.25, userSelect: "none" }}>{producto.emoji}</span>
-                    <span style={{ position: "absolute", top: "10px", left: "10px",
-                      background: BADGE_BG[producto.badge], color: "white",
-                      fontSize: "11px", padding: "4px 10px", borderRadius: "4px", fontWeight: 600 }}>
-                      {producto.badge}
-                    </span>
+                    {producto.imagen_url ? (
+                      <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontSize: "64px", opacity: 0.25, userSelect: "none" }}>🌸</span>
+                    )}
+                    {producto.badge && (
+                      <span style={{ position: "absolute", top: "10px", left: "10px",
+                        background: BADGE_BG[producto.badge] ?? "#6B2D8B", color: "white",
+                        fontSize: "11px", padding: "4px 10px", borderRadius: "4px", fontWeight: 600, zIndex: 1 }}>
+                        {producto.badge}
+                      </span>
+                    )}
                   </div>
                   {/* Info */}
                   <div className="p-5 flex flex-col flex-1">
                     <span className="text-xs tracking-widest uppercase mb-1" style={{ color: "#A855C9" }}>
-                      {producto.marca}
+                      {producto.marcas?.nombre}
                     </span>
                     <h3 className="text-xl mb-1 leading-tight"
                       style={{ fontFamily: "var(--font-cormorant)", color: "#1A1A1A" }}>
                       {producto.nombre}
                     </h3>
                     <p className="text-sm mb-4" style={{ color: "rgba(26,26,26,0.5)" }}>
-                      {producto.ml ? `${producto.ml} ml · ` : ""}{producto.categoria}
+                      {producto.tamano ? `${producto.tamano} · ` : ""}{producto.categorias?.nombre}
                     </p>
                     <div className="mt-auto flex items-center justify-between gap-3">
-                      <span className="text-2xl font-light"
-                        style={{ fontFamily: "var(--font-cormorant)", color: "#6B2D8B" }}>
-                        {formatPrecio(producto.precio)}
-                      </span>
-                      <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.ml ? `%20(${producto.ml}ml)` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span className="text-2xl font-light"
+                          style={{ fontFamily: "var(--font-cormorant)", color: "#6B2D8B" }}>
+                          {formatPrecio(producto.precio)}
+                        </span>
+                        {producto.precio_oferta && (
+                          <span style={{ color: "rgba(26,26,26,0.4)", fontSize: "12px", textDecoration: "line-through" }}>
+                            {formatPrecio(producto.precio_oferta)}
+                          </span>
+                        )}
+                      </div>
+                      <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
                         style={{ background: "#6B2D8B", color: "white", padding: "8px 12px",
