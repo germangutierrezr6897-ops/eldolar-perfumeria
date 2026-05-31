@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     locale: "es_CL",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
   themeColor: "#6B2D8B",
 };
 
@@ -46,7 +49,6 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${cormorant.variable} ${dmSans.variable}`}>
       <head>
-        <meta name="theme-color" content="#6B2D8B" />
         <meta name="msapplication-navbutton-color" content="#6B2D8B" />
         <meta name="apple-mobile-web-app-status-bar-style" content="#6B2D8B" />
       </head>
