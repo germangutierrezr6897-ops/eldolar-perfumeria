@@ -75,6 +75,10 @@ export default function CatalogPage() {
         }
         .search-input::placeholder { color: rgba(26,26,26,0.4); }
         .search-input:focus { outline: none; border-color: #6B2D8B; }
+        .catalog-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+        @media (max-width: 1024px) { .catalog-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+        @media (max-width: 640px)  { .catalog-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+        @media (max-width: 400px)  { .catalog-grid { grid-template-columns: 1fr; } }
       `}</style>
 
       {/* Navbar */}
@@ -201,12 +205,12 @@ export default function CatalogPage() {
               <p className="text-lg">No hay productos en esta categoría aún.</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px" }}>
+            <div className="catalog-grid">
               {filtrados.map((producto) => (
                 <div key={producto.id} className="product-card overflow-hidden flex flex-col"
                   style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
                   {/* Imagen con badge */}
-                  <div style={{ position: "relative", height: "200px", borderRadius: "16px 16px 0 0", overflow: "hidden",
+                  <div style={{ position: "relative", height: "clamp(140px, 20vw, 200px)", borderRadius: "16px 16px 0 0", overflow: "hidden",
                     background: "linear-gradient(135deg, #1a0a2e, #6B2D8B)",
                     display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {producto.imagen_url ? (
