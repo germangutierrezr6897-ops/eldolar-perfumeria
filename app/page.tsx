@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import type { Producto, Categoria } from "@/lib/supabase";
 import { useCart } from "@/lib/cart-context";
 import CartDrawer from "@/app/components/CartDrawer";
+import ProductModal from "@/app/components/ProductModal";
 
 function formatPrecio(precio: number) {
   return `$${precio.toLocaleString("es-CL")}`;
@@ -26,6 +27,7 @@ export default function Home() {
   const [busqueda, setBusqueda] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const { addItem, count } = useCart();
 
@@ -509,7 +511,8 @@ export default function Home() {
                 <div className="product-grid">
                   {filtrados.map((producto) => (
                     <div key={producto.id} className="product-card overflow-hidden flex flex-col"
-                      style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "14px" }}>
+                      style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "14px", cursor: "pointer" }}
+                      onClick={() => setProductoSeleccionado(producto)}>
                       <div style={{ position: "relative", height: "180px", borderRadius: "14px 14px 0 0",
                         overflow: "hidden", background: "linear-gradient(135deg,#1a0a2e,#6B2D8B)",
                         display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -547,7 +550,7 @@ export default function Home() {
                               </span>
                             )}
                           </div>
-                          <button onClick={() => { addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
+                          <button onClick={(e) => { e.stopPropagation(); addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
                             style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 600,
                               padding: "7px 12px", borderRadius: "9999px", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
                             🛒 Agregar
@@ -624,6 +627,13 @@ export default function Home() {
       </div>{/* fin main-layout */}
 
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {productoSeleccionado && (
+        <ProductModal
+          producto={productoSeleccionado}
+          onClose={() => setProductoSeleccionado(null)}
+          onAgregar={() => { setProductoSeleccionado(null); setIsCartOpen(true); }}
+        />
+      )}
 
       {/* Botón WhatsApp flotante */}
       <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"

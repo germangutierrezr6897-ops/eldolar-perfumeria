@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import type { Producto, Categoria } from "@/lib/supabase";
 import { useCart } from "@/lib/cart-context";
 import CartDrawer from "@/app/components/CartDrawer";
+import ProductModal from "@/app/components/ProductModal";
 
 const BADGE_BG: Record<string, string> = {
   NUEVO:  "#6B2D8B",
@@ -26,6 +27,7 @@ export default function CatalogPage() {
   const [busqueda, setBusqueda] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
   const { addItem, count } = useCart();
 
   useEffect(() => {
@@ -223,7 +225,8 @@ export default function CatalogPage() {
             <div className="catalog-grid">
               {filtrados.map((producto) => (
                 <div key={producto.id} className="product-card overflow-hidden flex flex-col"
-                  style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px" }}>
+                  style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "16px", cursor: "pointer" }}
+                  onClick={() => setProductoSeleccionado(producto)}>
                   {/* Imagen con badge */}
                   <div style={{ position: "relative", height: "clamp(140px, 20vw, 200px)", borderRadius: "16px 16px 0 0", overflow: "hidden",
                     background: "linear-gradient(135deg, #1a0a2e, #6B2D8B)",
@@ -265,7 +268,7 @@ export default function CatalogPage() {
                           </span>
                         )}
                       </div>
-                      <button onClick={() => { addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
+                      <button onClick={(e) => { e.stopPropagation(); addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
                         style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 600,
                           padding: "8px 12px", borderRadius: "9999px", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
                         🛒 Agregar
@@ -310,6 +313,13 @@ export default function CatalogPage() {
       </footer>
 
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {productoSeleccionado && (
+        <ProductModal
+          producto={productoSeleccionado}
+          onClose={() => setProductoSeleccionado(null)}
+          onAgregar={() => { setProductoSeleccionado(null); setIsCartOpen(true); }}
+        />
+      )}
 
       {/* Botón WhatsApp flotante */}
       <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"
