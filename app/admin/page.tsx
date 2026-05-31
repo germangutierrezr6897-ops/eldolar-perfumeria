@@ -88,7 +88,7 @@ export default function AdminPage() {
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (loginUser === "admin" && loginPass === "eldolar2025") {
+    if (loginUser === "administrador" && loginPass === "30052026") {
       localStorage.setItem("admin_session", "ok");
       setAutenticado(true);
     } else {
