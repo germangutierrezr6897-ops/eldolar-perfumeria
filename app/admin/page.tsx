@@ -2,12 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
 import type { Producto, Categoria, Marca } from "@/lib/supabase";
+import {
+  getProductos, crearProducto, actualizarProducto, eliminarProducto,
+  getCategorias, crearCategoria, actualizarCategoria, eliminarCategoria,
+  getMarcas, crearMarca, actualizarMarca, eliminarMarca,
+  getBanners, crearBanner, actualizarOrdenBanner, toggleBannerActivo, eliminarBanner,
+} from "./actions";
+import type { Banner } from "./actions";
 
 // ── Tipos locales ─────────────────────────────────────────────────────────────
 
-type Tab = "productos" | "categorias" | "marcas";
+type Tab = "productos" | "categorias" | "marcas" | "banners";
 
 type FormProducto = {
   nombre: string;
@@ -161,10 +167,10 @@ function Panel({ onLogout }: { onLogout: () => void }) {
 
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "32px 24px" }}>
         {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginBottom: "28px",
-          background: "white", borderRadius: "10px", padding: "4px", display: "inline-flex",
+        <div style={{ display: "inline-flex", gap: "4px", marginBottom: "28px",
+          background: "white", borderRadius: "10px", padding: "4px",
           border: "1px solid rgba(107,45,139,0.15)" }}>
-          {(["productos", "categorias", "marcas"] as Tab[]).map((t) => (
+          {(["productos", "categorias", "marcas", "banners"] as Tab[]).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               style={tab === t
                 ? { background: "#6B2D8B", color: "white", border: "none", borderRadius: "7px",
@@ -179,6 +185,7 @@ function Panel({ onLogout }: { onLogout: () => void }) {
         {tab === "productos"  && <TabProductos />}
         {tab === "categorias" && <TabCatMarca tabla="categorias" titulo="Categorías" />}
         {tab === "marcas"     && <TabCatMarca tabla="marcas" titulo="Marcas" />}
+        {tab === "banners"    && <TabBanners />}
       </div>
     </div>
   );
@@ -199,10 +206,10 @@ function TabProductos() {
 
   const cargar = useCallback(async () => {
     setLoading(true);
-    const [{ data: prods }, { data: cats }, { data: mrcas }] = await Promise.all([
-      supabase.from("productos").select("*, marcas(nombre), categorias(nombre)").order("created_at", { ascending: false }),
-      supabase.from("categorias").select("*").order("nombre"),
-      supabase.from("marcas").select("*").order("nombre"),
+    const [prods, cats, mrcas] = await Promise.all([
+      getProductos(),
+      getCategorias(),
+      getMarcas(),
     ]);
     setProductos(prods || []);
     setCategorias(cats || []);
@@ -243,11 +250,18 @@ function TabProductos() {
       imagen_url: form.imagen_url || null,
       activo: form.activo, destacado: form.destacado, mas_vendido: form.mas_vendido,
     };
-    const { error } = editando
-      ? await supabase.from("productos").update(datos).eq("id", editando.id)
-      : await supabase.from("productos").insert(datos);
+    try {
+      if (editando) {
+        await actualizarProducto(editando.id, datos);
+      } else {
+        await crearProducto(datos);
+      }
+    } catch (e: unknown) {
+      setGuardando(false);
+      setMsg({ tipo: "err", texto: e instanceof Error ? e.message : "Error desconocido" });
+      return;
+    }
     setGuardando(false);
-    if (error) { setMsg({ tipo: "err", texto: error.message }); return; }
     setMsg({ tipo: "ok", texto: editando ? "Producto actualizado." : "Producto creado." });
     setModalOpen(false);
     cargar();
@@ -256,8 +270,12 @@ function TabProductos() {
 
   async function eliminar(id: number) {
     if (!confirm("¿Eliminar este producto?")) return;
-    const { error } = await supabase.from("productos").delete().eq("id", id);
-    if (error) { setMsg({ tipo: "err", texto: error.message }); return; }
+    try {
+      await eliminarProducto(id);
+    } catch (e: unknown) {
+      setMsg({ tipo: "err", texto: e instanceof Error ? e.message : "Error al eliminar" });
+      return;
+    }
     setMsg({ tipo: "ok", texto: "Producto eliminado." });
     cargar();
     setTimeout(() => setMsg(null), 3000);
@@ -497,7 +515,7 @@ function TabCatMarca({ tabla, titulo }: { tabla: "categorias" | "marcas"; titulo
 
   const cargar = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from(tabla).select("*").order("nombre");
+    const data = tabla === "categorias" ? await getCategorias() : await getMarcas();
     setItems(data || []);
     setLoading(false);
   }, [tabla]);
@@ -518,11 +536,19 @@ function TabCatMarca({ tabla, titulo }: { tabla: "categorias" | "marcas"; titulo
     e.preventDefault();
     if (!form.nombre || !form.slug) { setMsg({ tipo: "err", texto: "Nombre y slug son obligatorios." }); return; }
     setGuardando(true);
-    const { error } = editandoId
-      ? await supabase.from(tabla).update({ nombre: form.nombre, slug: form.slug }).eq("id", editandoId)
-      : await supabase.from(tabla).insert({ nombre: form.nombre, slug: form.slug });
+    const datos = { nombre: form.nombre, slug: form.slug };
+    try {
+      if (tabla === "categorias") {
+        editandoId ? await actualizarCategoria(editandoId, datos) : await crearCategoria(datos);
+      } else {
+        editandoId ? await actualizarMarca(editandoId, datos) : await crearMarca(datos);
+      }
+    } catch (e: unknown) {
+      setGuardando(false);
+      setMsg({ tipo: "err", texto: e instanceof Error ? e.message : "Error desconocido" });
+      return;
+    }
     setGuardando(false);
-    if (error) { setMsg({ tipo: "err", texto: error.message }); return; }
     setMsg({ tipo: "ok", texto: editandoId ? "Actualizado correctamente." : "Creado correctamente." });
     setForm(FORM_CAT_VACIO);
     setEditandoId(null);
@@ -532,8 +558,16 @@ function TabCatMarca({ tabla, titulo }: { tabla: "categorias" | "marcas"; titulo
 
   async function eliminar(id: number) {
     if (!confirm(`¿Eliminar este elemento? Esto puede afectar productos asociados.`)) return;
-    const { error } = await supabase.from(tabla).delete().eq("id", id);
-    if (error) { setMsg({ tipo: "err", texto: error.message }); return; }
+    try {
+      if (tabla === "categorias") {
+        await eliminarCategoria(id);
+      } else {
+        await eliminarMarca(id);
+      }
+    } catch (e: unknown) {
+      setMsg({ tipo: "err", texto: e instanceof Error ? e.message : "Error al eliminar" });
+      return;
+    }
     setMsg({ tipo: "ok", texto: "Eliminado correctamente." });
     cargar();
     setTimeout(() => setMsg(null), 3000);
@@ -595,6 +629,164 @@ function TabCatMarca({ tabla, titulo }: { tabla: "categorias" | "marcas"; titulo
             </button>
           </div>
         </form>
+      </div>
+    </>
+  );
+}
+
+// ── Tab Banners ───────────────────────────────────────────────────────────────
+
+function TabBanners() {
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [subiendo, setSubiendo] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [msg, setMsg] = useState<{ tipo: "ok" | "err"; texto: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const cargar = useCallback(async () => {
+    setLoading(true);
+    const data = await getBanners();
+    setBanners(data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    setSubiendo(true);
+    try {
+      const url = await uploadImage(file);
+      const maxOrden = banners.length > 0 ? Math.max(...banners.map(b => b.orden)) : 0;
+      await crearBanner(url, maxOrden + 1);
+      setMsg({ tipo: "ok", texto: "Banner agregado correctamente." });
+      cargar();
+    } catch (e: unknown) {
+      setMsg({ tipo: "err", texto: e instanceof Error ? e.message : "Error al subir" });
+    } finally {
+      setSubiendo(false);
+      setTimeout(() => setMsg(null), 3000);
+    }
+  }
+
+  async function moverBanner(id: number, direccion: "arriba" | "abajo") {
+    const idx = banners.findIndex(b => b.id === id);
+    const swapIdx = direccion === "arriba" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= banners.length) return;
+
+    const updated = [...banners];
+    const ordenA = updated[idx].orden;
+    const ordenB = updated[swapIdx].orden;
+
+    await Promise.all([
+      actualizarOrdenBanner(updated[idx].id, ordenB),
+      actualizarOrdenBanner(updated[swapIdx].id, ordenA),
+    ]);
+    cargar();
+  }
+
+  async function toggleActivo(banner: Banner) {
+    await toggleBannerActivo(banner.id, !banner.activo);
+    cargar();
+  }
+
+  async function handleEliminar(id: number) {
+    if (!confirm("¿Eliminar este banner?")) return;
+    try {
+      await eliminarBanner(id);
+      setMsg({ tipo: "ok", texto: "Banner eliminado." });
+      cargar();
+    } catch (e: unknown) {
+      setMsg({ tipo: "err", texto: e instanceof Error ? e.message : "Error al eliminar" });
+    }
+    setTimeout(() => setMsg(null), 3000);
+  }
+
+  return (
+    <>
+      {msg && <Notif tipo={msg.tipo} texto={msg.texto} />}
+
+      <h2 style={{ ...tituloStyle, marginBottom: "8px" }}>Banners del slideshow</h2>
+      <p style={{ fontSize: "13px", color: "#888", marginBottom: "24px" }}>
+        Las imágenes se muestran en el orden indicado. Solo los banners activos aparecen en la tienda.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "24px", alignItems: "start" }}>
+
+        {/* Lista de banners */}
+        <div style={{ background: "white", borderRadius: "12px", border: "1px solid rgba(107,45,139,0.12)", overflow: "hidden" }}>
+          {loading ? (
+            <p style={{ padding: "24px", color: "#6B2D8B" }}>Cargando...</p>
+          ) : banners.length === 0 ? (
+            <p style={{ padding: "24px", color: "#888" }}>No hay banners. Sube la primera imagen.</p>
+          ) : banners.map((banner, idx) => (
+            <div key={banner.id} style={{ display: "flex", alignItems: "center", gap: "12px",
+              padding: "12px 16px", borderBottom: "1px solid rgba(107,45,139,0.07)" }}>
+
+              {/* Miniatura */}
+              <div style={{ width: 80, height: 50, borderRadius: "6px", overflow: "hidden",
+                background: "#f0f0f0", flexShrink: 0, position: "relative" }}>
+                <Image src={banner.imagen_url} alt={`Banner ${idx + 1}`} fill style={{ objectFit: "cover" }} />
+              </div>
+
+              {/* Orden e info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 600, fontSize: "13px", color: "#1A1A1A" }}>Banner #{banner.orden}</p>
+                <p style={{ fontSize: "11px", color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {banner.imagen_url}
+                </p>
+              </div>
+
+              {/* Controles */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                <button onClick={() => moverBanner(banner.id, "arriba")} disabled={idx === 0}
+                  style={{ ...btnEditStyle, opacity: idx === 0 ? 0.3 : 1, fontSize: "14px", padding: "4px 8px" }}>↑</button>
+                <button onClick={() => moverBanner(banner.id, "abajo")} disabled={idx === banners.length - 1}
+                  style={{ ...btnEditStyle, opacity: idx === banners.length - 1 ? 0.3 : 1, fontSize: "14px", padding: "4px 8px" }}>↓</button>
+                <button onClick={() => toggleActivo(banner)}
+                  style={{ ...btnEditStyle, background: banner.activo ? "rgba(34,197,94,0.08)" : "rgba(156,163,175,0.15)",
+                    color: banner.activo ? "#16a34a" : "#9ca3af",
+                    border: `1px solid ${banner.activo ? "rgba(34,197,94,0.3)" : "rgba(156,163,175,0.3)"}` }}>
+                  {banner.activo ? "Activo" : "Oculto"}
+                </button>
+                <button onClick={() => handleEliminar(banner.id)} style={btnDelStyle}>Eliminar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Zona de carga */}
+        <div style={{ background: "white", borderRadius: "12px", border: "1px solid rgba(107,45,139,0.12)", padding: "20px" }}>
+          <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1A1A1A", marginBottom: "16px" }}>
+            Agregar banner
+          </h3>
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          <div
+            onClick={() => fileRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); e.dataTransfer.files[0] && handleFile(e.dataTransfer.files[0]); }}
+            style={{ border: `2px dashed ${dragOver ? "#6B2D8B" : "rgba(107,45,139,0.3)"}`,
+              borderRadius: "10px", padding: "32px 20px", textAlign: "center", cursor: "pointer",
+              background: dragOver ? "rgba(107,45,139,0.04)" : "white", transition: "all 0.2s" }}>
+            {subiendo ? (
+              <p style={{ color: "#6B2D8B", fontSize: "14px" }}>Subiendo imagen...</p>
+            ) : (
+              <>
+                <p style={{ fontSize: "32px", marginBottom: "8px" }}>🖼️</p>
+                <p style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
+                  Arrastra una imagen o haz clic
+                </p>
+                <p style={{ fontSize: "11px", color: "#aaa" }}>PNG, JPG, WEBP recomendado</p>
+              </>
+            )}
+          </div>
+          <p style={{ fontSize: "12px", color: "#aaa", marginTop: "12px" }}>
+            El banner se agrega al final del slideshow. Usa las flechas ↑↓ para reordenar.
+          </p>
+        </div>
       </div>
     </>
   );
