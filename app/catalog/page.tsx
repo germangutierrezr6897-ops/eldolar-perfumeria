@@ -118,7 +118,7 @@ export default function CatalogPage() {
               style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "22px", color: "#1A1A1A", padding: "4px 8px", lineHeight: 1 }}>
               {isMenuOpen ? "✕" : "☰"}
             </button>
-            <a href="https://wa.me/56900000000?text=Hola!%20Me%20interesa%20conocer%20sus%20productos%20disponibles."
+            <a href="https://wa.me/56991793563?text=Hola!%20Me%20interesa%20conocer%20sus%20productos%20disponibles."
               target="_blank" rel="noopener noreferrer" className="shrink-0"
               style={{ background: "#25D366", color: "#ffffff", animation: "pulse-wa 2s ease-in-out infinite",
                 borderRadius: "25px", padding: "10px 20px", fontWeight: "600", fontSize: "14px",
@@ -246,7 +246,7 @@ export default function CatalogPage() {
                           </span>
                         )}
                       </div>
-                      <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                      <a href={`https://wa.me/56991793563?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
                         style={{ background: "#6B2D8B", color: "white", padding: "8px 12px",
@@ -274,7 +274,7 @@ export default function CatalogPage() {
               <a href="https://instagram.com/perfumeriaeldolar18" target="_blank" rel="noopener noreferrer"
                 className="text-white/50 hover:text-[#A855C9] transition-colors text-xs tracking-widest uppercase">Instagram</a>
               <span className="text-[#6B2D8B] text-xs">·</span>
-              <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"
                 className="text-white/50 hover:text-[#A855C9] transition-colors text-xs tracking-widest uppercase">WhatsApp</a>
               <span className="text-[#6B2D8B] text-xs">·</span>
               <a href="https://facebook.com/PerfumeriaElDolar" target="_blank" rel="noopener noreferrer"
@@ -293,7 +293,7 @@ export default function CatalogPage() {
       </footer>
 
       {/* Botón WhatsApp flotante */}
-      <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer"
+      <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"
         style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 9999,
           background: "#25D366", borderRadius: "50%", width: "60px", height: "60px",
           display: "flex", alignItems: "center", justifyContent: "center",

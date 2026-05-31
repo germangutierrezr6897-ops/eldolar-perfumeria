@@ -235,7 +235,7 @@ export default function Home() {
                 fontSize: "22px", color: "#1A1A1A", padding: "4px 8px", lineHeight: 1 }}>
               {isMenuOpen ? "✕" : "☰"}
             </button>
-            <a href="https://wa.me/56900000000?text=Hola!%20Me%20interesa%20conocer%20sus%20productos%20disponibles."
+            <a href="https://wa.me/56991793563?text=Hola!%20Me%20interesa%20conocer%20sus%20productos%20disponibles."
               target="_blank" rel="noopener noreferrer" className="shrink-0 wa-btn"
               style={{ background: "#25D366", color: "#ffffff", animation: "pulse-wa 2s ease-in-out infinite",
                 borderRadius: "25px", padding: "10px 18px", fontWeight: "600", fontSize: "14px",
@@ -299,10 +299,10 @@ export default function Home() {
           </a>
 
           <div style={{ marginTop: "auto", padding: "16px" }}>
-            <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"
               style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px",
                 color: "#25D366", textDecoration: "none", fontWeight: 500 }}>
-              💬 +56 9 0000 0000
+              💬 +56 9 9179 3563
             </a>
           </div>
         </aside>
@@ -441,7 +441,7 @@ export default function Home() {
                                   </span>
                                 )}
                               </div>
-                              <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                              <a href={`https://wa.me/56991793563?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
                                 target="_blank" rel="noopener noreferrer"
                                 style={{ background: "#6B2D8B", color: "white", fontSize: "10px", fontWeight: 500,
                                   padding: "5px 8px", borderRadius: "9999px", textDecoration: "none", whiteSpace: "nowrap" }}>
@@ -531,7 +531,7 @@ export default function Home() {
                               </span>
                             )}
                           </div>
-                          <a href={`https://wa.me/56900000000?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                          <a href={`https://wa.me/56991793563?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
                             target="_blank" rel="noopener noreferrer"
                             style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 500,
                               padding: "7px 10px", borderRadius: "9999px", textDecoration: "none", whiteSpace: "nowrap" }}>
@@ -581,7 +581,7 @@ export default function Home() {
                 <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap", justifyContent: "center" }}>
                   {[
                     { href: "https://instagram.com/perfumeriaeldolar18", label: "Instagram" },
-                    { href: "https://wa.me/56900000000", label: "WhatsApp" },
+                    { href: "https://wa.me/56991793563", label: "WhatsApp" },
                     { href: "https://facebook.com/PerfumeriaElDolar", label: "Facebook" },
                   ].map((s, i, arr) => (
                     <span key={s.href} style={{ display: "flex", alignItems: "center", gap: "20px" }}>
@@ -609,7 +609,7 @@ export default function Home() {
       </div>{/* fin main-layout */}
 
       {/* Botón WhatsApp flotante */}
-      <a href="https://wa.me/56900000000" target="_blank" rel="noopener noreferrer"
+      <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"
         style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 9999,
           background: "#25D366", borderRadius: "50%", width: "56px", height: "56px",
           display: "flex", alignItems: "center", justifyContent: "center",
