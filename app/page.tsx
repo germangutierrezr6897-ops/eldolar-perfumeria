@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { Producto, Categoria } from "@/lib/supabase";
+import { useCart } from "@/lib/cart-context";
+import CartDrawer from "@/app/components/CartDrawer";
 
 function formatPrecio(precio: number) {
   return `$${precio.toLocaleString("es-CL")}`;
@@ -23,7 +25,9 @@ export default function Home() {
   const [categoriaActiva, setCategoriaActiva] = useState("Todas");
   const [busqueda, setBusqueda] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const { addItem, count } = useCart();
 
   const [banners, setBanners] = useState<string[]>([
     "/banner-01-coloracion.jpg",
@@ -234,6 +238,18 @@ export default function Home() {
               style={{ background: "transparent", border: "none", cursor: "pointer",
                 fontSize: "22px", color: "#1A1A1A", padding: "4px 8px", lineHeight: 1 }}>
               {isMenuOpen ? "✕" : "☰"}
+            </button>
+            {/* Ícono carrito */}
+            <button onClick={() => setIsCartOpen(true)}
+              style={{ position: "relative", background: "transparent", border: "none",
+                cursor: "pointer", fontSize: "22px", padding: "6px", lineHeight: 1 }}>
+              🛒
+              {count > 0 && (
+                <span style={{ position: "absolute", top: 0, right: 0, background: "#C2185B",
+                  color: "white", borderRadius: "50%", width: "18px", height: "18px",
+                  fontSize: "10px", fontWeight: 700, display: "flex", alignItems: "center",
+                  justifyContent: "center" }}>{count}</span>
+              )}
             </button>
             <a href="https://wa.me/56991793563?text=Hola!%20Me%20interesa%20conocer%20sus%20productos%20disponibles."
               target="_blank" rel="noopener noreferrer" className="shrink-0 wa-btn"
@@ -531,12 +547,11 @@ export default function Home() {
                               </span>
                             )}
                           </div>
-                          <a href={`https://wa.me/56991793563?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
-                            target="_blank" rel="noopener noreferrer"
-                            style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 500,
-                              padding: "7px 10px", borderRadius: "9999px", textDecoration: "none", whiteSpace: "nowrap" }}>
-                            💬 Consultar
-                          </a>
+                          <button onClick={() => { addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
+                            style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 600,
+                              padding: "7px 12px", borderRadius: "9999px", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+                            🛒 Agregar
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -607,6 +622,8 @@ export default function Home() {
 
         </div>{/* fin main-content */}
       </div>{/* fin main-layout */}
+
+      <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       {/* Botón WhatsApp flotante */}
       <a href="https://wa.me/56991793563" target="_blank" rel="noopener noreferrer"

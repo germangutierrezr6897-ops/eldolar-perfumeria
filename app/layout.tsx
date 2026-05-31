@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/lib/cart-context";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -52,7 +53,7 @@ export default function RootLayout({
         <meta name="msapplication-navbutton-color" content="#6B2D8B" />
         <meta name="apple-mobile-web-app-status-bar-style" content="#6B2D8B" />
       </head>
-      <body className="min-h-screen flex flex-col antialiased">{children}</body>
+      <body className="min-h-screen flex flex-col antialiased"><CartProvider>{children}</CartProvider></body>
     </html>
   );
 }
