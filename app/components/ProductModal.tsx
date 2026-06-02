@@ -65,7 +65,16 @@ export default function ProductModal({
           {producto.imagen_url
             ? <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "contain", padding: "16px" }} />
             : <span style={{ fontSize: "80px", opacity: 0.2 }}>🌸</span>}
-          {producto.badge && (
+          {producto.agotado && (
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+              <span style={{ background: "#C2185B", color: "white", fontSize: "16px", fontWeight: 700,
+                padding: "8px 24px", borderRadius: "8px", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                Agotado
+              </span>
+            </div>
+          )}
+          {!producto.agotado && producto.badge && (
             <span style={{ position: "absolute", top: "14px", left: "14px",
               background: BADGE_BG[producto.badge] ?? "#6B2D8B", color: "white",
               fontSize: "12px", padding: "5px 12px", borderRadius: "6px", fontWeight: 700 }}>
@@ -117,19 +126,22 @@ export default function ProductModal({
           {/* Botones */}
           <div style={{ display: "flex", gap: "10px" }}>
             <button onClick={handleAgregar}
-              style={{ flex: 1, background: "#6B2D8B", color: "white", border: "none",
+              disabled={producto.agotado}
+              style={{ flex: 1, background: producto.agotado ? "#9ca3af" : "#6B2D8B", color: "white", border: "none",
                 borderRadius: "12px", padding: "14px", fontSize: "14px", fontWeight: 700,
-                cursor: "pointer" }}>
-              🛒 Agregar al carrito
+                cursor: producto.agotado ? "not-allowed" : "pointer" }}>
+              {producto.agotado ? "⚠️ Producto agotado" : "🛒 Agregar al carrito"}
             </button>
-            <a href={`https://wa.me/56991793563?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
-              target="_blank" rel="noopener noreferrer"
-              style={{ flex: 1, background: "#25D366", color: "white",
-                borderRadius: "12px", padding: "14px", fontSize: "14px", fontWeight: 700,
-                cursor: "pointer", textDecoration: "none", display: "flex",
-                alignItems: "center", justifyContent: "center" }}>
-              💬 Consultar
-            </a>
+            {!producto.agotado && (
+              <a href={`https://wa.me/56991793563?text=Hola!%20Me%20interesa%20${encodeURIComponent(producto.nombre)}${producto.tamano ? `%20(${encodeURIComponent(producto.tamano)})` : ""}.%20%C2%BFEst%C3%A1%20disponible%3F`}
+                target="_blank" rel="noopener noreferrer"
+                style={{ flex: 1, background: "#25D366", color: "white",
+                  borderRadius: "12px", padding: "14px", fontSize: "14px", fontWeight: 700,
+                  cursor: "pointer", textDecoration: "none", display: "flex",
+                  alignItems: "center", justifyContent: "center" }}>
+                💬 Consultar
+              </a>
+            )}
           </div>
         </div>
       </div>

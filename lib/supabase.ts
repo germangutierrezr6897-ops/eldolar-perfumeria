@@ -19,6 +19,7 @@ export type Producto = {
   activo: boolean
   destacado: boolean
   mas_vendido: boolean
+  agotado: boolean
   created_at: string
   marcas?: { nombre: string }
   categorias?: { nombre: string }

@@ -135,6 +135,16 @@ export default function Home() {
         /* ── Producto cards ── */
         .product-card { transition: box-shadow 0.3s ease, transform 0.3s ease; }
         .product-card:hover { box-shadow: 0 8px 24px rgba(107,45,139,0.2); transform: translateY(-4px); }
+        .product-card.agotado { opacity: 0.82; }
+        .agotado-overlay {
+          position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+          display: flex; align-items: center; justify-content: center; z-index: 2;
+        }
+        .agotado-label {
+          background: #C2185B; color: white; font-size: 11px; font-weight: 700;
+          padding: 5px 14px; border-radius: 6px; letter-spacing: 0.12em;
+          text-transform: uppercase; pointer-events: none;
+        }
 
         /* ── Inputs ── */
         .search-input::placeholder { color: rgba(26,26,26,0.4); }
@@ -513,13 +523,18 @@ export default function Home() {
                     <div key={producto.id} className="product-card overflow-hidden flex flex-col"
                       style={{ background: "white", border: "1px solid rgba(107,45,139,0.2)", borderRadius: "14px", cursor: "pointer" }}
                       onClick={() => setProductoSeleccionado(producto)}>
-                      <div style={{ position: "relative", height: "180px", borderRadius: "14px 14px 0 0",
+                    <div style={{ position: "relative", height: "180px", borderRadius: "14px 14px 0 0",
                         overflow: "hidden", background: "linear-gradient(135deg,#1a0a2e,#6B2D8B)",
                         display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {producto.imagen_url
                           ? <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "cover" }} />
                           : <span style={{ fontSize: "56px", opacity: 0.25, userSelect: "none" }}>🌸</span>}
-                        {producto.badge && (
+                        {producto.agotado && (
+                          <div className="agotado-overlay">
+                            <span className="agotado-label">Agotado</span>
+                          </div>
+                        )}
+                        {!producto.agotado && producto.badge && (
                           <span style={{ position: "absolute", top: "8px", left: "8px",
                             background: BADGE_BG[producto.badge] ?? "#6B2D8B", color: "white",
                             fontSize: "10px", padding: "3px 8px", borderRadius: "4px", fontWeight: 600, zIndex: 1 }}>
@@ -550,10 +565,13 @@ export default function Home() {
                               </span>
                             )}
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
-                            style={{ background: "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 600,
-                              padding: "7px 12px", borderRadius: "9999px", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
-                            🛒 Agregar
+                          <button
+                            onClick={(e) => { e.stopPropagation(); if (producto.agotado) return; addItem({ id: producto.id, nombre: producto.nombre, precio: producto.precio, precio_oferta: producto.precio_oferta, imagen_url: producto.imagen_url, tamano: producto.tamano, marca: producto.marcas?.nombre }); setIsCartOpen(true); }}
+                            disabled={producto.agotado}
+                            style={{ background: producto.agotado ? "#9ca3af" : "#6B2D8B", color: "white", fontSize: "11px", fontWeight: 600,
+                              padding: "7px 12px", borderRadius: "9999px", border: "none",
+                              cursor: producto.agotado ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}>
+                            {producto.agotado ? "Agotado" : "🛒 Agregar"}
                           </button>
                         </div>
                       </div>

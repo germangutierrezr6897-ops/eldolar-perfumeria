@@ -28,6 +28,7 @@ type FormProducto = {
   activo: boolean;
   destacado: boolean;
   mas_vendido: boolean;
+  agotado: boolean;
 };
 
 type FormCatMarca = {
@@ -38,7 +39,7 @@ type FormCatMarca = {
 const FORM_PRODUCTO_VACIO: FormProducto = {
   nombre: "", descripcion: "", marca_id: "", categoria_id: "",
   precio: "", precio_oferta: "", tamano: "", badge: "",
-  imagen_url: "", activo: true, destacado: false, mas_vendido: false,
+  imagen_url: "", activo: true, destacado: false, mas_vendido: false, agotado: false,
 };
 
 const FORM_CAT_VACIO: FormCatMarca = { nombre: "", slug: "" };
@@ -232,7 +233,7 @@ function TabProductos() {
       marca_id: String(p.marca_id ?? ""), categoria_id: String(p.categoria_id ?? ""),
       precio: String(p.precio), precio_oferta: p.precio_oferta ? String(p.precio_oferta) : "",
       tamano: p.tamano ?? "", badge: p.badge ?? "", imagen_url: p.imagen_url ?? "",
-      activo: p.activo, destacado: p.destacado, mas_vendido: p.mas_vendido,
+      activo: p.activo, destacado: p.destacado, mas_vendido: p.mas_vendido, agotado: p.agotado,
     });
     setModalOpen(true);
   }
@@ -248,7 +249,7 @@ function TabProductos() {
       precio_oferta: form.precio_oferta ? Number(form.precio_oferta) : null,
       tamano: form.tamano || null, badge: form.badge || null,
       imagen_url: form.imagen_url || null,
-      activo: form.activo, destacado: form.destacado, mas_vendido: form.mas_vendido,
+      activo: form.activo, destacado: form.destacado, mas_vendido: form.mas_vendido, agotado: form.agotado,
     };
     try {
       if (editando) {
@@ -295,7 +296,7 @@ function TabProductos() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(107,45,139,0.12)", background: "#faf8fc" }}>
-                {["Imagen","Nombre","Marca","Categoría","Precio","Oferta","Badge","Activo","Dest.","Vend.","Acciones"].map(h => (
+                {["Imagen","Nombre","Marca","Categoría","Precio","Oferta","Badge","Activo","Dest.","Vend.","Agotado","Acciones"].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
@@ -324,6 +325,7 @@ function TabProductos() {
                   <td style={tdStyle}><Pill on={p.activo} /></td>
                   <td style={tdStyle}><Pill on={p.destacado} /></td>
                   <td style={tdStyle}><Pill on={p.mas_vendido} /></td>
+                  <td style={tdStyle}><Pill on={p.agotado} color={p.agotado ? "#C2185B" : undefined} /></td>
                   <td style={tdStyle}>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button onClick={() => abrirEditar(p)} style={btnEditStyle}>Editar</button>
@@ -455,6 +457,11 @@ function ModalProducto({ form, setForm, categorias, marcas, editando, guardando,
                 {label}
               </label>
             ))}
+            <label style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer", fontSize: "14px", color: form.agotado ? "#C2185B" : "#1A1A1A", fontWeight: form.agotado ? 600 : 400 }}>
+              <input type="checkbox" checked={form.agotado} onChange={e => set("agotado", e.target.checked)}
+                style={{ accentColor: "#C2185B", width: "16px", height: "16px" }} />
+              ⚠️ Agotado
+            </label>
           </div>
 
           {/* Imagen */}
@@ -794,10 +801,10 @@ function TabBanners() {
 
 // ── Componentes auxiliares ────────────────────────────────────────────────────
 
-function Pill({ on }: { on: boolean }) {
+function Pill({ on, color }: { on: boolean; color?: string }) {
   return (
     <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%",
-      background: on ? "#22c55e" : "#d1d5db" }} />
+      background: on ? (color ?? "#22c55e") : "#d1d5db" }} />
   );
 }
 
