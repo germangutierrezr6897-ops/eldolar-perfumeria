@@ -59,11 +59,11 @@ export default function ProductModal({
         </button>
 
         {/* Imagen */}
-        <div style={{ position: "relative", height: "280px", borderRadius: "20px 20px 0 0",
-          overflow: "hidden", background: "linear-gradient(135deg,#1a0a2e,#6B2D8B)",
+        <div style={{ position: "relative", height: "320px", borderRadius: "20px 20px 0 0",
+          overflow: "hidden", background: "#f8f4fc",
           display: "flex", alignItems: "center", justifyContent: "center" }}>
           {producto.imagen_url
-            ? <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "cover" }} />
+            ? <Image src={producto.imagen_url} alt={producto.nombre} fill style={{ objectFit: "contain", padding: "16px" }} />
             : <span style={{ fontSize: "80px", opacity: 0.2 }}>🌸</span>}
           {producto.badge && (
             <span style={{ position: "absolute", top: "14px", left: "14px",
