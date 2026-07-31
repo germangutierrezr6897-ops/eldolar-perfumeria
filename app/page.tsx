@@ -408,7 +408,6 @@ export default function Home() {
       const y = el.getBoundingClientRect().top + window.scrollY - 130;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
-    document.getElementById("productos")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function handleAddToCart(producto: Producto) {
