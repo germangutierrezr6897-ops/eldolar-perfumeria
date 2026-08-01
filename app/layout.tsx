@@ -16,6 +16,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.perfumeriaeldolar.cl"),
   title: "El Dólar Perfumería | Belleza y Fragancias en Chile",
   description:
     "Perfumes, maquillaje, cuidado del rostro, capilar y más al mejor precio en Chile. Envío a todo el país.",
