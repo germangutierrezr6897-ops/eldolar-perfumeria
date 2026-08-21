@@ -306,7 +306,15 @@ export default function CatalogPage() {
             <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textAlign: "center",
               borderTop: "0.5px solid rgba(255,255,255,0.1)", paddingTop: "12px",
               marginTop: "12px", letterSpacing: "0.08em" }}>
-              Desarrollado por GUTIERREZ INNOVACIONES CL
+              Desarrollado por{" "}
+              <a
+                href="https://gutierrezinnovaciones.cl"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "inherit", textDecoration: "underline" }}
+              >
+                GUTIERREZ INNOVACIONES CL
+              </a>
             </p>
           </div>
         </div>

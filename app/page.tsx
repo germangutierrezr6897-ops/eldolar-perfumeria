@@ -1516,7 +1516,15 @@ export default function Home() {
                     letterSpacing: "0.08em",
                   }}
                 >
-                  Desarrollado por GUTIERREZ INNOVACIONES CL
+                  Desarrollado por{" "}
+                  <a
+                    href="https://gutierrezinnovaciones.cl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "inherit", textDecoration: "underline" }}
+                  >
+                    GUTIERREZ INNOVACIONES CL
+                  </a>
                 </p>
               </div>
             </div>
